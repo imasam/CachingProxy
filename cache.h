@@ -18,6 +18,6 @@ private:
 public:
     Cache();
     void store(const std::string &url, const std::vector<char> &msg);
-    std::vector<char> read(const std::string &url);
     bool check(const std::string &url);
+    std::vector<char> read(const std::string &url);
 };

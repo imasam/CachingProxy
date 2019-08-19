@@ -34,3 +34,30 @@ Cache::Cache() {
   mkdir(cachename.c_str(),
         S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); // ignore fail here
 }
+
+void Cache::store(const std::string &url, const std::vector<char> &msg){
+    std::ofstream ofs;
+    std::string path = parseURL(url);
+    createIndex(path);
+    ofs.open(path, std::ofstream::out | std::ofstream::trunc);
+    ofs << msg.data();
+    ofs.close();
+}
+
+bool Cache::check(const std::string &url){
+    std::string path = parseURL(url);
+    struct stat buf;
+    return stat(path.c_str(), &buf) == 0;
+}
+
+std::vector<char> Cache::read(const std::string &url){ 
+    std::string path = parseURL(url);
+    struct stat s;
+    if(stat(path.c_str(), &s) == 0){
+        if(s.st_mode & S_IFDIR)
+            path += "/index.html";
+    }
+    std::ifstream ifs(path, std::ios::binary);
+    std::vector<char> msg(std::istream_iterator<char>{ifs}, {});
+    return msg;
+}
