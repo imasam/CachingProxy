@@ -32,7 +32,7 @@ std::string delHeadSpace(std::string& msg){
 }
 
 // get next segment splited by flag
-std::string getNextSeg(std::string& msg, char flag = ' ', size_t substrlen = 1){
+std::string getNextSeg(std::string& msg, char flag, size_t substrlen){
     msg = delHeadSpace(msg);
     auto pos = msg.find(flag);
     std::string res = msg.substr(0, flag);
@@ -75,4 +75,33 @@ struct tm str2Tm(std::string date){
 
 size_t HTTPAge(std::string date);
 
-double HTTPTimeRange2Num(std::string end, std::string start);
+double HTTPTimeRange2Num(std::string end, std::string start){
+      double seconds;
+
+  struct tm end_tm, start_tm;
+  end_tm.tm_wday = wday2Num(getNextSeg(end, ','));
+  end_tm.tm_mday = stoi(getNextSeg(end));
+  end_tm.tm_mon = mon2Num(getNextSeg(end));
+  end_tm.tm_year = stoi(getNextSeg(end)) - 1900;
+  end_tm.tm_hour = stoi(getNextSeg(end, ':'));
+  end_tm.tm_min = stoi(getNextSeg(end, ':'));
+  end_tm.tm_sec = stoi(getNextSeg(end));
+  end_tm.tm_isdst =
+      0; // this is important, missing this will cause ambigous time
+  std::string zone = getNextSeg(end);
+  end_tm.tm_zone = zone.c_str();
+
+  start_tm.tm_wday = wday2Num(getNextSeg(start, ','));
+  start_tm.tm_mday = stoi(getNextSeg(start));
+  start_tm.tm_mon = mon2Num(getNextSeg(start));
+  start_tm.tm_year = stoi(getNextSeg(start)) - 1900;
+  start_tm.tm_hour = stoi(getNextSeg(start, ':'));
+  start_tm.tm_min = stoi(getNextSeg(start, ':'));
+  start_tm.tm_sec = stoi(getNextSeg(start));
+  start_tm.tm_isdst = 0;
+  std::string zone2 = getNextSeg(start);
+  start_tm.tm_zone = zone2.c_str();
+
+  seconds = difftime(mktime(&end_tm), mktime(&start_tm));
+  return seconds;
+}

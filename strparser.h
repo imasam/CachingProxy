@@ -11,7 +11,7 @@ public:
 
     std::string tolower(std::string& msg);
     std::string delHeadSpace(std::string& msg); 
-    std::string getNextSeg(std::string& msg, char flag, size_t substrlen);
+    std::string getNextSeg(std::string& msg, char flag = ' ', size_t substrlen = 1);
     bool containNewLine(const std::vector<char> &str);
     std::vector<char> deleteLine(std::vector<char> &msg, std::vector<char>::iterator begin);
 
