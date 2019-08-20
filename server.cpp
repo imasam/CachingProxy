@@ -6,37 +6,35 @@ std::vector<char> Server::recvAllRQST(int fd){
 	size_t index = 0;
 	int contentlen = 0;
 	StrParser strparser;
-	while (!strparser.containNewLine(msg)) {
-		if (msg.size() < index + MAXDATASIZE)
+	while(!strparser.containNewLine(msg)){
+		if(msg.size() < index + MAXDATASIZE)
 		msg.resize(index + MAXDATASIZE);
 		int nbytes;
-		if ((nbytes = recv(fd, &msg.data()[index], MAXDATASIZE - 1, 0)) <= 0) {
-		return std::vector<char>();
-		} else {
-		index += nbytes;
-		}
+		if((nbytes = recv(fd, &msg.data()[index], MAXDATASIZE - 1, 0)) <= 0)
+			return std::vector<char>();
+		else
+			index += nbytes;
 	}
 	msg.resize(index);
 	HTTPRQSTParser httprqstparser(msg);
 	contentlen = httprqstparser.getContentLen();
-	if (contentlen != 0) {
+	if(contentlen != 0){
 		std::vector<char> pattern{'\r', '\n', '\r', '\n'};
-		auto it =
-			std::search(msg.begin(), msg.end(), pattern.begin(), pattern.end()) + 4;
-		while (it != msg.end()) {
-		--contentlen;
-		++it;
+		auto it = std::search(msg.begin(), msg.end(), pattern.begin(), pattern.end()) + 4;
+		while(it != msg.end()){
+			--contentlen;
+			++it;
 		}
-		while (contentlen) {
-		if (msg.size() < index + MAXDATASIZE)
-			msg.resize(index + MAXDATASIZE);
-		int nbytes;
-		if ((nbytes = recv(fd, &msg.data()[index], MAXDATASIZE - 1, 0)) <= 0) {
-			break;
-		} else {
-			index += nbytes;
-			contentlen -= nbytes;
-		}
+		while(contentlen){
+			if (msg.size() < index + MAXDATASIZE)
+				msg.resize(index + MAXDATASIZE);
+			int nbytes;
+			if ((nbytes = recv(fd, &msg.data()[index], MAXDATASIZE - 1, 0)) <= 0)
+				break;
+			else {
+				index += nbytes;
+				contentlen -= nbytes;
+			}
 		}
 	}
 	msg.resize(index);
