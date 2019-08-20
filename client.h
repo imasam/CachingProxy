@@ -28,7 +28,7 @@ private:
   std::vector<char> recvAll(int fd);
 
 public:
-  Client(const char *h, const char *p);
+  Client(const char* h, const char* p);
   ~Client();
   int getError();
   int getFD();

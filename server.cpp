@@ -26,12 +26,12 @@ std::vector<char> Server::recvAllRQST(int fd){
 			++it;
 		}
 		while(contentlen){
-			if (msg.size() < index + MAXDATASIZE)
+			if(msg.size() < index + MAXDATASIZE)
 				msg.resize(index + MAXDATASIZE);
 			int nbytes;
-			if ((nbytes = recv(fd, &msg.data()[index], MAXDATASIZE - 1, 0)) <= 0)
+			if((nbytes = recv(fd, &msg.data()[index], MAXDATASIZE - 1, 0)) <= 0)
 				break;
-			else {
+			else{
 				index += nbytes;
 				contentlen -= nbytes;
 			}

@@ -63,7 +63,7 @@ std::vector<char> Client::recvAll(int fd){
     return msg;
 }
 
-Client::Client(const char *h, const char *p){
+Client::Client(const char* h, const char* p){
     port = p;
     hostname = getHost(h);
     error = 0;

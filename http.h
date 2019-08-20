@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 
-std::vector<char> http200();
-std::vector<char> http400();
-std::vector<char> http502();
+std::vector<char> HTTP200();
+std::vector<char> HTTP400();
+std::vector<char> HTTP502();
+std::vector<char> HTTP503();
