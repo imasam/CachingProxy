@@ -76,7 +76,7 @@
     
     HTTPRSPNSParser::HTTPRSPNSParser(std::vector<char> response){
         if (response.empty())
-            throw std::string("no response");
+            throw std::string("empty response");
         HTTPResponse = response.data();
         HTTPResponse_char = response;
         int target = HTTPResponse.find("\r\n");
@@ -91,9 +91,9 @@
         return status_code;
     }
 
-    bool HTTPRSPNSParser::mustRevalidate(){
-        std::string ctrl = headers["cache-controle"];
-        if(ctrl.find("must-revalidation") != std::string::npos || ctrl.find("proxy-revalidation") != std::string::npos)
+    bool HTTPRSPNSParser::needRevalidate(){
+        std::string ctrlPolicy = headers["cache-control"];
+        if(ctrlPolicy.find("must-revalidation") != std::string::npos || ctrlPolicy.find("proxy-revalidation") != std::string::npos)
             return true;
         return false;
     }
@@ -114,7 +114,7 @@
     }
 
     bool HTTPRSPNSParser::stillfresh(){
-        return not_expire() && !mustRevalidate();
+        return not_expire() && !needRevalidate();
     }
 
     std::vector<char> HTTPRSPNSParser::getResponse(){
@@ -138,6 +138,7 @@
         return std::vector<char>(status_text.begin(), status_text.end());
     }
     
+    // check whether the response says no cache 
     bool HTTPRSPNSParser::good4Cache(){
         if(!headers.count("cache-control"))
             return true;
@@ -149,13 +150,13 @@
         return true;
     }
 
-    std::string HTTPRSPNSParser::whyBad4Cache(){
-        std::string ctlPolicy = headers["cache-control"];
-        if (ctlPolicy.find("private") != std::string::npos)
+    std::string HTTPRSPNSParser::Bad4CacheInfo(){
+        std::string ctrlPolicy = headers["cache-control"];
+        if (ctrlPolicy.find("private") != std::string::npos)
             return "private policy of http response";
-        if (ctlPolicy.find("no-cache") != std::string::npos)
+        if (ctrlPolicy.find("no-cache") != std::string::npos)
             return "no-cache policy of http response";
-        if (ctlPolicy.find("no-store") != std::string::npos)
+        if (ctrlPolicy.find("no-store") != std::string::npos)
             return "no-store policy of http response";
         return "max cache time is 0";
     }

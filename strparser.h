@@ -1,4 +1,4 @@
-// includes funcations to parse string
+/* includes funcations to parse string */
 
 #include <string>
 #include <map>

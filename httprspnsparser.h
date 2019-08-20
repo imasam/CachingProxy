@@ -31,7 +31,7 @@ private:
 public:
     HTTPRSPNSParser(std::vector<char> response);
     size_t getStatusCode();
-    bool mustRevalidate();
+    bool needRevalidate();
     bool not_expire();
     std::string expiresAt();
     bool stillfresh();
@@ -40,5 +40,5 @@ public:
     std::string getETag();
     std::vector<char> getStatusText();
     bool good4Cache();
-    std::string whyBad4Cache();
+    std::string Bad4CacheInfo();
 };
