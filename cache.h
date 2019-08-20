@@ -1,4 +1,4 @@
-// cache
+// store/read GET response to/from local file system
 #include <fstream>
 #include <sstream>
 #include <string>
