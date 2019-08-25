@@ -100,11 +100,107 @@ std::string Proxy::getclientIP(int newfd){
   return std::string(ip);
 }
 
-void Proxy::GET_handler(HTTPRQSTParser &httprqstparser, int fd);
+void Proxy::GET_handler(HTTPRQSTParser &httprqstparser, int fd){
+    Cache cache;
+    std::vector<char> HTTPResponse;
+    try{
+        HTTPResponse = handlebyCache(cache, httprqstparser);
+        if(HTTPResponse.empty()) // not in cache
+            HTTPResponse = getNewResponse(cache, httprqstparser, httprqstparser.getRequest());
+        if((!strparser.containNewLine(HTTPResponse))){
+            server.send(fd, HTTP502());
+            log.respond2Client(HTTP502());
+            return;
+        }
+    }catch(std::string e){
+        HTTPResponse = HTTP502();
+    }
 
-void Proxy::POST_handler(HTTPRQSTParser &httprqstparser, int fd);
+    /*
+    if(!HTTPResponse.empty()){
+        HTTPRSPNSParser httprspnsparser(HTTPResponse);
+        log.respond2Client(httprspnsparser.getStatusText());
+    }
+    else{
+        HTTPResponse = HTTP502();
+        server.sendData(newfd, HTTPResponse);
+    }
+    */
+}
 
-void Proxy::CONNECT_handler(HTTPRQSTParser &httprqstparser, int fd);
+void Proxy::POST_handler(HTTPRQSTParser &httprqstparser, int fd){
+    std::string hostname = httprqstparser.getHostName();
+    std::string port = httprqstparser.getHostPort();
+    std::string statusLine = httprqstparser.getStatusLine();
+    
+    Client client(hostname.c_str(), port.c_str()); // !!! have to check success or not, if failed, return 503,important
+    if(client.getError == 1){
+        server.send(fd, HTTP503());
+        return;
+    }
+    client.send(httprqstparser.getRequest);
+    log.reqFromServer(statusLine, hostname);
+
+    std::vector<char> HTTPResponse = client.recvServerResponse();
+    HTTPRSPNSParser httprspnsparser(HTTPResponse);
+    log.recvFromServer(httprspnsparser.getStatusText(), hostname);
+    log.respond2Client(httprspnsparser.getStatusText());
+    server.send(fd, HTTPResponse);
+}
+
+// preparation for tunnulMode
+void Proxy::prepareTunnel(fd_set *master, int &fdmax, const int &clientfd, int &serverfd){
+    FD_ZERO(master);
+    FD_SET(clientfd, master);
+    FD_SET(serverfd, master);
+    fdmax = std::max(clientfd, serverfd);
+}
+
+// a tunnel which transfers messages between browser and original server
+void Proxy::tunnelMode(const int &clientfd, Log &log, Server &server, Client &client){
+    // connect
+    fd_set master, read_fds;
+    int fdmax, serverfd = client.getFD();
+    prepareTunnel(&master, fdmax, clientfd, serverfd);
+    FD_ZERO(&read_fds);
+    while(true){
+        read_fds = master;
+        if(select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1)
+            break;
+        if(FD_ISSET(serverfd, &read_fds)){
+            std::vector<char> msg = client.basicRecv();
+            if(msg.empty()){
+                log.closeTunnel();
+                return;
+            }
+            server.send(clientfd, msg);
+        }
+        else if(FD_ISSET(clientfd, &read_fds)){
+            std::vector<char> msg = server.basicRecv(clientfd);
+            if (msg.empty()) {
+                log.closeTunnel();
+                return;
+            }
+        client.send(msg);
+        }
+    }
+}
+
+void Proxy::CONNECT_handler(HTTPRQSTParser &httprqstparser, int fd){
+    std::string hostname = httprqstparser.getHostName();
+    std::string port = httprqstparser.getHostPort();
+    Client client(hostname.c_str(), port.c_str()); // !!! have to check success or not, if failed, return 503,important
+    if(client.getError == 1){
+        log.respond2Client(HTTP503());
+        server.send(fd, HTTP503());
+        return;
+    }
+    // otherwise success
+    log.respond2Client(HTTP200());
+    server.send(fd, HTTP200());
+    // transit message
+    tunnelMode(fd, log, server, client);
+}
 
 Proxy::Proxy(int requestid){
     log = requestid;

@@ -26,6 +26,8 @@ private:
     std::vector<char> getRevalidRequest(HTTPRSPNSParser &httprspnsparer, HTTPRQSTParser &httprqstparser);
     std::vector<char> revalidation(HTTPRSPNSParser &httprspnsparser, HTTPRQSTParser &httprqstparser, Cache &cache);
     std::string getclientIP(int newfd);
+    void prepareTunnel(fd_set *master, int &fdmax, const int &clientfd, int &serverfd);
+    void tunnelMode(const int &clientfd, Log &log, Server &server, Client &client);
     bool checkComplete(HTTPRQSTParser &httprqstparser, std::vector<char> &HTTPRequest);
     void GET_handler(HTTPRQSTParser &httprqstparser, int fd);
     void POST_handler(HTTPRQSTParser &httprqstparser, int fd);
